@@ -10,19 +10,72 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const {username} = request.headers
+
+  const userToFind = users.find(element => element.username === username);
+
+  if (!userToFind) {
+    return response.status(404).json({error: "Usuário não tem registro"})
+  }
+
+  request.user = userToFind
+
+  return next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const {user} = request
+
+  if (user.pro === false && user.todos.length >= 10) {
+    return response.status(403).json({error: "O usuário alcançou o limite de cadastro de todos do plano gratuito, faça o upgrade para pro para cadastrar mais todos"})
+  }
+
+  return next()
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const {username} = request.headers
+  const {id} = request.params
+
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  const testIfUUID = regexExp.test(id);
+
+  if (testIfUUID === false) {
+    return response.status(400).json({error: "O id não é um UUID válido"})
+  }
+
+  const userToFind = users.find(element => element.username === username)
+
+  if (!userToFind) {
+    return response.status(404).json({error: "Usuário não encontrado"})
+  }
+
+  const todoToFind = userToFind.todos.find(element => element.id === id)
+
+  if (!todoToFind) {
+    return response.status(404).json({error: "Todo não encontrado"})
+  }
+
+  request.todo = todoToFind
+
+  request.user = userToFind
+
+  return next()
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const {id} = request.params
+
+  const userToFind = users.find(element => element.id === id)
+
+  if (!userToFind) {
+    return response.status(404).json({error: "Usuário não encontrado"})
+  }
+
+  request.user = userToFind
+
+  return next()
 }
 
 app.post('/users', (request, response) => {
